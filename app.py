@@ -1,54 +1,52 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import pickle
+from sklearn.preprocessing import StandardScaler
 
-# Load the model
-try:
-    with open('decision_tree_model.pkl', 'rb') as file:
-        model = pickle.load(file)
-except Exception as e:
-    st.error(f"Error loading decision_tree_model.pkl: {e}")
-    st.stop()
+# Load the trained model
+with open('random_forest_model.pkl', 'rb') as file:
+    model = pickle.load(file)
 
-# Define function to make predictions
-def predict_selling_price(features):
-    try:
-        prediction = model.predict([features])
-        return prediction[0]
-    except Exception as e:
-        st.error(f"Error during prediction: {e}")
-        return None
+# Define the feature columns as used during model training
+feature_columns = ['year', 'km_driven', 
+                   'name_Audi', 'name_BMW', 'name_Ford', 'name_Honda', 'name_Hyundai', 'name_Maruti', 'name_Toyota',
+                   'fuel_CNG', 'fuel_Diesel', 'fuel_Electric', 'fuel_LPG', 'fuel_Petrol',
+                   'seller_type_Dealer', 'seller_type_Individual', 'seller_type_Trustmark Dealer',
+                   'transmission_Automatic', 'transmission_Manual',
+                   'owner_First Owner', 'owner_Fourth & Above Owner', 'owner_Second Owner', 'owner_Test Drive Car', 'owner_Third Owner']
 
-# Streamlit app
-st.title("Car Selling Price Prediction")
+# Initialize the scaler
+scaler = StandardScaler()
 
-st.write("""
-## Predict the selling price of a car based on its features.
-""")
+# Define the Streamlit app
+def main():
+    st.title("Car Selling Price Prediction App")
 
-# Input fields for the features
-km_driven = st.number_input('Kilometers Driven', min_value=0)
-fuel = st.selectbox('Fuel Type', ['Petrol', 'Diesel', 'CNG', 'LPG', 'Electric'])
-seller_type = st.selectbox('Seller Type', ['Individual', 'Dealer', 'Trustmark Dealer'])
-transmission = st.selectbox('Transmission', ['Manual', 'Automatic'])
-owner = st.selectbox('Owner Type', ['First Owner', 'Second Owner', 'Third Owner', 'Fourth & Above Owner', 'Test Drive Car'])
+    name = st.selectbox('Name', ['Maruti', 'Hyundai', 'Honda', 'Toyota', 'Ford', 'BMW', 'Audi'])
+    year = st.number_input('Year', min_value=1990, max_value=2024, value=2020)
+    km_driven = st.number_input('Kilometers Driven', min_value=0, max_value=500000, value=10000)
+    fuel = st.selectbox('Fuel Type', ['Petrol', 'Diesel', 'CNG', 'LPG', 'Electric'])
+    seller_type = st.selectbox('Seller Type', ['Individual', 'Dealer', 'Trustmark Dealer'])
+    transmission = st.selectbox('Transmission', ['Manual', 'Automatic'])
+    owner = st.selectbox('Owner', ['First Owner', 'Second Owner', 'Third Owner', 'Fourth & Above Owner', 'Test Drive Car'])
 
-# One-hot encoding for categorical features
-fuel_dict = {'Petrol': 0, 'Diesel': 1, 'CNG': 2, 'LPG': 3, 'Electric': 4}
-seller_type_dict = {'Individual': 0, 'Dealer': 1, 'Trustmark Dealer': 2}
-transmission_dict = {'Manual': 0, 'Automatic': 1}
-owner_dict = {'First Owner': 0, 'Second Owner': 1, 'Third Owner': 2, 'Fourth & Above Owner': 3, 'Test Drive Car': 4}
+    input_data = pd.DataFrame({
+        'name': [name], 'year': [year], 'km_driven': [km_driven],
+        'fuel': [fuel], 'seller_type': [seller_type], 'transmission': [transmission], 'owner': [owner]
+    })
 
-fuel_encoded = fuel_dict[fuel]
-seller_type_encoded = seller_type_dict[seller_type]
-transmission_encoded = transmission_dict[transmission]
-owner_encoded = owner_dict[owner]
+    input_data = pd.get_dummies(input_data, columns=['name', 'fuel', 'seller_type', 'transmission', 'owner'])
 
-# Button for prediction
-if st.button('Predict'):
-    features = [km_driven, fuel_encoded, seller_type_encoded, transmission_encoded, owner_encoded]
-    st.write(f"Input features: {features}")  # Debugging information
-    prediction = predict_selling_price(features)
-    if prediction is not None:
-        st.write(f'The predicted selling price is {prediction:.2f}')
+    for col in feature_columns:
+        if col not in input_data.columns:
+            input_data[col] = 0
+    input_data = input_data[feature_columns]
+
+    input_data[['km_driven']] = scaler.fit_transform(input_data[['km_driven']])
+
+    if st.button('Predict Selling Price'):
+        prediction = model.predict(input_data)
+        st.write(f"The predicted selling price is: ₹{prediction[0]:.2f}")
+
+if __name__ == '__main__':
+    main()
