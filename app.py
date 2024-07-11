@@ -4,7 +4,7 @@ import pickle
 from sklearn.preprocessing import StandardScaler
 
 # Load the trained model
-with open('random_forest_model.pkl', 'rb') as file:
+with open('decision_tree_model.pkl', 'rb') as file:
     model = pickle.load(file)
 
 # Define the feature columns as used during model training
