@@ -3,24 +3,23 @@ import pandas as pd
 import numpy as np
 import pickle
 
-# Load the model
+# Load the pipeline
 try:
-    with open('decision_tree_model.pkl', 'rb') as file:
-        model = pickle.load(file)
+    with open('decision_tree_pipeline.pkl', 'rb') as file:
+        pipeline = pickle.load(file)
 except Exception as e:
-    st.error(f"Error loading decision_tree_model.pkl: {e}")
+    st.error(f"Error loading decision_tree_pipeline.pkl: {e}")
     st.stop()
 
 # Define function to make predictions
 def predict_selling_price(features):
-    # Ensure the features are in the correct shape
-    features = np.array(features).reshape(1, -1)
-    st.write(f"Input features shape: {features.shape}")  # Debugging information
-    # Check for any missing values
-    if np.any(np.isnan(features)):
-        raise ValueError("Input features contain missing values")
-    prediction = model.predict(features)
-    return prediction[0]
+    try:
+        features_df = pd.DataFrame([features], columns=['km_driven', 'fuel', 'seller_type', 'transmission', 'owner'])
+        prediction = pipeline.predict(features_df)
+        return prediction[0]
+    except Exception as e:
+        st.error(f"Error during prediction: {e}")
+        return None
 
 # Streamlit app
 st.title("Car Selling Price Prediction")
@@ -36,25 +35,16 @@ seller_type = st.selectbox('Seller Type', ['Individual', 'Dealer', 'Trustmark De
 transmission = st.selectbox('Transmission', ['Manual', 'Automatic'])
 owner = st.selectbox('Owner Type', ['First Owner', 'Second Owner', 'Third Owner', 'Fourth & Above Owner', 'Test Drive Car'])
 
-# One-hot encoding for categorical features
-fuel_dict = {'Petrol': 0, 'Diesel': 1, 'CNG': 2, 'LPG': 3, 'Electric': 4}
-seller_type_dict = {'Individual': 0, 'Dealer': 1, 'Trustmark Dealer': 2}
-transmission_dict = {'Manual': 0, 'Automatic': 1}
-owner_dict = {'First Owner': 0, 'Second Owner': 1, 'Third Owner': 2, 'Fourth & Above Owner': 3, 'Test Drive Car': 4}
-
-fuel_encoded = fuel_dict[fuel]
-seller_type_encoded = seller_type_dict[seller_type]
-transmission_encoded = transmission_dict[transmission]
-owner_encoded = owner_dict[owner]
-
 # Button for prediction
 if st.button('Predict'):
-    features = [km_driven, fuel_encoded, seller_type_encoded, transmission_encoded, owner_encoded]
+    features = {
+        'km_driven': km_driven,
+        'fuel': fuel,
+        'seller_type': seller_type,
+        'transmission': transmission,
+        'owner': owner
+    }
     st.write(f"Input features: {features}")  # Debugging information
-    try:
-        prediction = predict_selling_price(features)
+    prediction = predict_selling_price(features)
+    if prediction is not None:
         st.write(f'The predicted selling price is {prediction:.2f}')
-    except ValueError as e:
-        st.error(f"Error in prediction: {e}")
-    except Exception as e:
-        st.error(f"An unexpected error occurred: {e}")
