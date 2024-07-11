@@ -395,5 +395,5 @@ random_20_data_encoded.to_excel('random_20_data_encoded.xlsx', index=False)
 # In[ ]:
 
 
-
+df.drop(["name"],axis=1, inplace=True)
 
