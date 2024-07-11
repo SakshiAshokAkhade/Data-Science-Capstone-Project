@@ -15,6 +15,7 @@ except Exception as e:
 def predict_selling_price(features):
     # Ensure the features are in the correct shape
     features = np.array(features).reshape(1, -1)
+    st.write(f"Input features shape: {features.shape}")  # Debugging information
     # Check for any missing values
     if np.any(np.isnan(features)):
         raise ValueError("Input features contain missing values")
@@ -49,8 +50,11 @@ owner_encoded = owner_dict[owner]
 # Button for prediction
 if st.button('Predict'):
     features = [km_driven, fuel_encoded, seller_type_encoded, transmission_encoded, owner_encoded]
+    st.write(f"Input features: {features}")  # Debugging information
     try:
         prediction = predict_selling_price(features)
         st.write(f'The predicted selling price is {prediction:.2f}')
     except ValueError as e:
         st.error(f"Error in prediction: {e}")
+    except Exception as e:
+        st.error(f"An unexpected error occurred: {e}")
