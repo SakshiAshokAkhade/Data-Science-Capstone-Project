@@ -36,6 +36,6 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 pipeline.fit(X_train, y_train)
 
 # Save the pipeline (which includes the preprocessing and the model)
-with open('decision_tree_pipeline.pkl', 'wb') as file:
+with open('decision_tree_model.pkl', 'wb') as file:
     pickle.dump(pipeline, file)
 print("Model saved successfully!")
